@@ -37,8 +37,8 @@
 
 int main(int argc, char **argv)
 {
-	char input_user [10] = {0},
-		 input_password [10] = {0},
+	char input_user [20] = {0},
+		 input_password [20] = {0},
 		 user_validate[30] = {0},
 		 file_password[30] = {0};
 	int length_userValidate = 0,
