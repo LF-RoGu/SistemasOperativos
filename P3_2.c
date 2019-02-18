@@ -38,7 +38,7 @@ void *pi_value(void *args);
 
 pthread_mutex_t lock;
 
-float pi_sum = 0;
+float pi_total = 0;
 
 int main(int argc, char **argv)
 {
@@ -48,6 +48,8 @@ int main(int argc, char **argv)
 	long long stop_ts;
 	long long elapsed_ts;
 	
+	float pi_sum = 0;
+	
 	int args[N_THREADS];
 	pthread_t tid[N_THREADS];
 	
@@ -55,12 +57,16 @@ int main(int argc, char **argv)
 	
 	start_ts = ts.tv_sec;
 	
-	for(int i = 0; i < ITE; i++)
+	/**/
+	pthread_mutex_init(&lock,NULL);
+	
+	for(int i = 0; i < N_THREADS; i++)
 	{
 		args[i] = i;
 		/**/
-		pthread_create(&tid[i],NULL,pi_value,(void*)&args[i]);
+		pthread_create(&tid[i],NULL,pi_value,(void *)&args[i]);
 	}
+	
 	for(int i = 0; i < N_THREADS; i++)
 	{
 		pthread_join(tid[i],NULL);
@@ -71,6 +77,8 @@ int main(int argc, char **argv)
 	stop_ts = ts.tv_sec;
 	
 	elapsed_ts = stop_ts - start_ts;
+	
+	pi_sum = pi_total;
 	
 	puts("*************************");
 	printf("Pi value: %2.20f \n",pi_sum);
@@ -84,15 +92,21 @@ int main(int argc, char **argv)
 
 void *pi_value(void *args)
 {
-	int temp_n = *((int*)args);
-	int r_init = temp_n*(ITE/N_THREADS);
-	int r_end = (temp_n+1)*(ITE/N_THREADS);
-
+	int temp = *((int *)args);
+	int r_init = temp*(ITE/N_THREADS);
+	int r_end = (temp+1)*(ITE/N_THREADS);
+	float temp_sum = 0;
 	
 	for(int i = r_init; i < r_end; i++)
 	{
-		pi_sum = pi_sum + pow(-1,i)*(4.0/((2.0*i+1)));
+		temp_sum = temp_sum + pow(-1,i)*(4.0/((2.0*i+1)));
 	}
+	
+	pthread_mutex_lock(&lock);
+	
+	pi_total = pi_total + temp_sum;
+	
+	pthread_mutex_unlock(&lock);
 	
 	return 0;
 }
