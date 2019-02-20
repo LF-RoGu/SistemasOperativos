@@ -57,8 +57,15 @@ int main(int argc, char **argv)
 	
 	start_ts = ts.tv_sec;
 	
-	/**/
-	pthread_mutex_init(&lock,NULL);
+	/*Create a mutex (buscar que es mutex), if the attribute is set as NULL, the funct
+	 * will ser as non recursive.
+	 * if its not created successfully it will return -1
+	 * else returns 0*/
+	
+	if( pthread_mutex_init(&lock,NULL) != 0)
+	{
+		perror("mutex not created\n");
+	}
 	
 	for(int i = 0; i < N_THREADS; i++)
 	{
@@ -86,6 +93,7 @@ int main(int argc, char **argv)
 	puts("*************************");
 	printf("Time passed: %lld sec \n",elapsed_ts);
 	
+	pthread_mutex_destroy(&lock);
 	
 	return 0;
 }
