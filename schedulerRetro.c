@@ -1,4 +1,4 @@
-#include <scheduler.h>
+#include "scheduler.h"
 #include <stdio.h>
 
 extern THANDLER threads[MAXTHREAD];
@@ -6,83 +6,30 @@ extern int currthread;
 extern int blockevent;
 extern int unblockevent;
 
-#define QUANTUM 1
-#define Q_LEV 10 // nivel de prioridad usados
-
-//Estructura para el uso de colas
-
-typedef struct queue {
-	int elem[MAXTHREAD];
-	int tope;
-	int cola;
-} queuef;
-
-void init(queuef *q);
-void push(queuef *q,int val);
-int pop(queuef *q);
-int isempty(queuef *q);
-
-void init(queuef *q)
-{
-	q->tope=0;
-	q->cola=0;
-}
-
-void push(queuef *q,int val) 
-{
-	q->elem[q->cola]=val;
-	q->cola++;
-	q->cola=q->cola%MAXTHREAD;
-}
-
-int pop(queuef *q)
-{
-	int valret;
-	valret=q->elem[q->tope];
-	q->tope++;
-	q->tope=q->tope%MAXTHREAD;
-	return(valret);
-}
-
 QUEUE ready;
+QUEUE Priority[5];
+QUEUE *actual = &Priority[0];
 QUEUE waitinginevent[MAXTHREAD];
+int Readyflag = 0;
 
-queuef feedback[Q_LEV];
-
-int quantum = 0;
-int threadC = 0;
-int threadP[MAXTHREAD];
-int init_flag = 1; // 
 void scheduler(int arguments)
 {
 	int old,next;
 	int changethread=0;
 	int waitingthread=0;
+
 	
 	int event=arguments & 0xFF00;
 	int callingthread=arguments & 0xFF;
-	
-	if(init_flag == 1)
-	{
-		int counter;
-		init_flag == 0;
-		for(counter = 0; counter<Q_LEV; counter++)
-		{
-			init(&feedback[counter]);
-			threadP[counter] = Q_LEV;
-		}
-	}
 
 	if(event==NEWTHREAD)
 	{
-		// Un nuevo hilo va a la cola de listos
 		threads[callingthread].status=READY;
-		threadP[callingthread] = 0;
-		threadC++;
-		_enqueue(&ready,callingthread);
-		printf("%d\n", callingthread);
+        QUEUE *new = &Priority[0];         //Guardamos nuevo hilo en prioridad 0
+		_enqueue(new,callingthread);
+        Readyflag = 1;                           //Bandera para indicar la existencia de hilos
 	}
-	
+    
 	if(event==BLOCKTHREAD)
 	{
 
@@ -93,11 +40,9 @@ void scheduler(int arguments)
 	}
 
 	if(event==ENDTHREAD)
-	{
+	{   
 		threads[callingthread].status=END;
-		threadP[callingthread] = Q_LEV;
-		threadC--;
-		changethread=1;
+        changethread=1;
 	}
 	
 	if(event==UNBLOCKTHREAD)
@@ -105,42 +50,52 @@ void scheduler(int arguments)
 			threads[callingthread].status=READY;
 			_enqueue(&ready,callingthread);
 	}
-
-	if(event==TIMER)
+    
+    if(event==TIMER)        //Se crea un nuevo evento
 	{
-		quantum++;
-		if(quantum==QUANTUM)
-		{
-			if(threadsPriority[callingthread]< QUEUE_LEVELS)
-			{
-				threadP[callingthread]++;
-			}
-			if(threadC == 1) 			{
-				threadP[callingthread] = 0;
-			}
+        if(threads[callingthread].status==RUNNING && Readyflag==1 ){      //Verificamos que exista un thread corriendo
+             
+         
+        int i;
+        for(i = 0;i<5;i++){
+            if(_emptyq(&Priority[i])==0){             //Si la cola no esta vacia
 
-			push(&feedback[threadP[callingthread]], callingthread);
-			int counter, threadIndex = 0;
-			for(counter = Q_LEV-1; counter>=0; counter--)
-			{
-				if((threadP[counter] <= threadP[threadIndex] && (threads[counter].status==READY || threads[counter].status==RUNNING)))
-				{
-					threadIndex = counter;
-				}
-			}
-			_enqueue(&ready,pop(&feedback[threadP[threadIndex]]));
+                if(i<4){
+                    actual = &Priority[i+1];
+                    threads[callingthread].status=READY;            //Lo dejamos con status listo
+                     _enqueue(actual,callingthread);   //Lo guardamos en la cola siguiente
+                    actual = &Priority[i];
+                }
+                else{                                  //Si se llegó a la última cola
+                    actual = &Priority[i];
+                    threads[callingthread].status=READY;            //Lo dejamos con status listo
+                     _enqueue(actual,callingthread);   //Lo guardamos en la cola siguiente
+                }
 
-			quantum = 0;
-			changethread=1;
-		}
+                
+                break;                                 //Salimos del ciclo una vez que ya se haya cambiado 
+            }
+        }
+        changethread=1;                                 //Cambiamos de thread        
+        }     
 	}
+
+	
 	if(changethread)
 	{
-		old=currthread;
-		next=_dequeue(&ready);
-		
-		threads[next].status=RUNNING;
-		_swapthreads(old,next);
+        if(threads[callingthread].status!=END){
+            old=currthread;
+		    next=_dequeue(actual); 
+		    threads[next].status=RUNNING;
+		    _swapthreads(old,next);
+        }
+        else{
+            old=currthread;
+		    next=_dequeue(&ready); 
+		    threads[next].status=RUNNING;
+		    _swapthreads(old,next);   
+        }
+	    
 	}
 
 }
