@@ -48,10 +48,13 @@ void scheduler(int arguments)
 	 * Activacion del reloj*/
 	if(event==TIMER)
 	{
-		threads[callingthread].status = READY;
-		_enqueue(&ready,callingthread);
+		if(threads[callingthread].status = RUNNING)
+		{
+			threads[callingthread].status = READY;
+			_enqueue(&ready,callingthread);
 		
-		changethread = TRUE;
+			changethread = 1;
+		}	
 	}
 	
 	if(changethread)
