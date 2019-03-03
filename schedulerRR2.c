@@ -1,18 +1,21 @@
-#include <scheduler.h>
+#include "scheduler.h"
+
 
 extern THANDLER threads[MAXTHREAD];
 extern int currthread;
 extern int blockevent;
 extern int unblockevent;
 
+int Timeflag=0;
 QUEUE ready;
 QUEUE waitinginevent[MAXTHREAD];
 
 void scheduler(int arguments)
 {
-	int old,next,q;
+	int old,next;
 	int changethread=0;
 	int waitingthread=0;
+   
 	
 	int event=arguments & 0xFF00;
 	int callingthread=arguments & 0xFF;
@@ -41,22 +44,23 @@ void scheduler(int arguments)
 	
 	if(event==UNBLOCKTHREAD)
 	{
-		threads[callingthread].status=READY;
-		_enqueue(&ready,callingthread);
+			threads[callingthread].status=READY;
+			_enqueue(&ready,callingthread);
 	}
-	/*Respecto al documento lo unico que falta es el evento TIMER
-	 * Activacion del reloj*/
-
-	if(event==TIMER && q==0)
-		q++;
-	if(event == TIMER && q==1)
+    
+     if(event==TIMER)        //Se crea un nuevo evento
 	{
-		threads[callingthread].status = READY;
-		_enqueue(&ready,callingthread);
-		
-		changethread = 1;
-		q=0;
+        if(threads[callingthread].status=RUNNING){
+            Timeflag++;
+            if(Timeflag==2){                                 //Verificamos que exista un thread corriendo
+            threads[callingthread].status=READY;            //Lo dejamos con status listo
+            _enqueue(&ready,callingthread);                 //Lo guardamos en la cola
+            changethread=1;
+            Timeflag=0;
+            }                                 //Cambiamos de thread
+        }            
 	}
+
 	
 	if(changethread)
 	{
