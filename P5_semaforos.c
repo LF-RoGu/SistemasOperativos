@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 /*Biblioteca generada en base a archivos de materias pasadas para las colas*/
-#include "P5_semaforos.h"
+#include "P5_colas.h"
 
 // Macro que incluye el código de la instrucción máquina xchg
 #define atomic_xchg(A,B) __asm__ __volatile__(	\
