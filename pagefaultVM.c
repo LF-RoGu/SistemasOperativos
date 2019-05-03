@@ -22,6 +22,41 @@ extern int ptlr;
 extern struct SYSTEMFRAMETABLE *systemframetable;
 extern struct PROCESSPAGETABLE *ptbr;
 
+/*Funciones provenientes de mmu.c*/
+/** Descripcion de la funcion
+ * La función copyframe(int sframe,int dframe) realiza la copia de un marco a otro
+	marco dentro del archive de intercambio donde sframe es el marco fuente y dframe es el
+	marco destino.
+ */
+extern int copyframe(int sframe,int dframe);
+/** Descripcion de la funcion
+ * La función writeblock(char *buffer, int dblock) escribe un bloque que es del
+	mismo tamaño de los marcos y páginas en el archivo de intercambio. El apuntador buffer
+	apunta a la memoria lo que se tiene que escribir y dblock es el bloque a escrinir que
+	corresponde a un marco en el archivo de intercambio.
+ */
+extern int writeblock(char *buffer, int dblock);
+/** Descripcion de la funcion
+ * La función readblock(char *buffer, int dblock) lee un bloque que es del mismo
+	tamaño de los marcos y páginas del archivo de intercambio. El apuntador buffer apunta a la
+	memoria donde se almacenarán los datos leídos y sblock es el bloque a leer que corresponde a
+	un marco en el archivo de intercambio.
+ */
+extern int readblock(char *buffer, int sblock);
+/** Descripcion de la funcion
+ * La función loadframe(int frame) transfiere al marco físico de la memoria física el
+	contenido que corresponde al marco del archivo de intercambio. El parámetro frame es el
+	marco físico que será cargado de su respaldo en el archivo de intercambio.
+ */
+extern int loadframe(int frame);
+/** Descripcion de la funcion
+ * La función saveframe(int frame) transfiere del marco frame de la memoria física al
+	bloque del archivo de intercambio que le corresponde a ese mismo marco físico. El parámetro
+	frame siempre debe ser un marco físico.
+ */
+extern int saveframe(int frame);
+/*Fin de funciones provenientes de mmu.c*/
+
 
 int getfreeframe();
 int searchvirtualframe();
