@@ -62,6 +62,10 @@ int getfreeframe();
 int searchvirtualframe();
 int getfifo();
 
+/*Virtual Frame Table var*/
+int VFT_table_start = 0;
+int VFT_table_end = 0;
+
 int pagefault(char *vaddress)
 {
     int i;
@@ -70,6 +74,13 @@ int pagefault(char *vaddress)
     int fd;
     char buffer[PAGESIZE];
     int pag_del_proceso;
+    
+    /*Inicio de la memoria secundaria*/
+	VFT_table_start = systemframetablesize + framesbegin;
+	/*
+	 * Segun la explicacion, el final de la memoria secundaria debe ser de por lo menos
+	 * el doble*/
+	VFT_table_end = (2*systemframetablesize) + framesbegin;
 
     // A partir de la dirección que provocó el fallo, calculamos la página
     pag_del_proceso=(long) vaddress>>12;
