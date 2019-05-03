@@ -58,9 +58,9 @@ extern int saveframe(int frame);
 /*Fin de funciones provenientes de mmu.c*/
 
 
-int getfreeframe();
-int searchvirtualframe();
-int getfifo();
+int get_free_frame();
+int search_virtual_frame();
+int get_fifo();
 
 /*Virtual Frame Table var*/
 int VFT_table_start = 0;
@@ -85,13 +85,15 @@ int pagefault(char *vaddress)
     // A partir de la dirección que provocó el fallo, calculamos la página
     pag_del_proceso=(long) vaddress>>12;
 
-
     // Si la página del proceso está en un marco virtual del disco
+    if(((ptbr + pag_del_proceso)->presente != TRUE) && ((ptbr + pag_del_proceso)->framenumber != -1))
     {
 
+		frame = (ptbr + pag_del_proceso)->framenumber;
 		// Lee el marco virtual al buffer
-
+		readblock(buffer,frame);
         // Libera el frame virtual
+        systemframetable[frame].assigned = FALSE;
     }
 
 
@@ -106,12 +108,14 @@ int pagefault(char *vaddress)
 		// Poner el bitde presente en 0 en la tabla de páginas
         
         // Si la página ya fue modificada, grábala en disco
+        if((ptbr + pag_a_expulsar)->modificado == TRUE)
         {
 			// Escribe el frame de la página en el archivo de respaldo y pon en 0 el bit de modificado
         }
 		
         // Busca un frame virtual en memoria secundaria
 		// Si no hay frames virtuales en memoria secundaria regresa error
+		if()
 		{
             return(-1);
         }
@@ -134,4 +138,55 @@ int pagefault(char *vaddress)
 
     return(1); // Regresar todo bien
 }
+
+/*Funcion obtenida de pageFault.c*/
+int get_free_frame()
+{
+	int i = 0;
+	/*
+	 * Buscamos en el systema una macro que se encuentre libre
+	 */
+	for(i = framesbegin; i < (framesbegin + systemframetablesize);i++)
+	{
+		if(systemframetable[i].assigned)
+		{
+			systemframetable[i].assigned = TRUE;
+			break;
+		}
+	}
+	if(i < (framesbegin + systemframetablesize))
+	{
+		systemframetable[i].assigned = TRUE;
+	}
+	else
+	{
+		i = -1;
+	}
+	return (i);
+}
+int search_virtual_frame()
+{
+		int i = 0;
+	/*
+	 * Buscamos en el systema una macro que se encuentre libre
+	 */
+	for(i = VFT_table_start; i < VFT_table_start;i++)
+	{
+		if(systemframetable[i].assigned)
+		{
+			systemframetable[i].assigned = TRUE;
+			break;
+		}
+	}
+	if(i < VFT_table_start)
+	{
+		systemframetable[i].assigned = TRUE;
+	}
+	else
+	{
+		i = -1;
+	}
+	return (i);
+}
+int get_fifo();
 
