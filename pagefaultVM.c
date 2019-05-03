@@ -108,18 +108,20 @@ int pagefault(char *vaddress)
 		// Poner el bitde presente en 0 en la tabla de páginas
         
         // Si la página ya fue modificada, grábala en disco
-        if((ptbr + pag_a_expulsar)->modificado == TRUE)
+        if(TRUE == (ptbr + pag_a_expulsar)->modificado)
         {
 			// Escribe el frame de la página en el archivo de respaldo y pon en 0 el bit de modificado
         }
 		
         // Busca un frame virtual en memoria secundaria
 		// Si no hay frames virtuales en memoria secundaria regresa error
-		if()
+		if(-1 == vframe)
 		{
             return(-1);
         }
         // Copia el frame a memoria secundaria, actualiza la tabla de páginas y libera el marco de la memoria principal
+		/*Hacemos copia de la memoria secundaria a la memoria principal*/
+		copyframe(frame,vframe);
     }
 
     // Busca un marco físico libre en el sistema
@@ -131,9 +133,12 @@ int pagefault(char *vaddress)
     // Si la página estaba en memoria secundaria
     {
         // Cópialo al frame libre encontrado en memoria principal y transfiérelo a la memoria física
+		writeblock(buffer,frame);
     }
    
-	// Poner el bit de presente en 1 en la tabla de páginas y el frame 
+	// Poner el bit de presente en 1 en la tabla de páginas y el frame
+	(ptbr + pag_del_proceso)->presente = TRUE;
+	(ptbr + pag_del_proceso)->framenumber = frame;
 
 
     return(1); // Regresar todo bien
