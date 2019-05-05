@@ -123,20 +123,18 @@ int pagefault(char *vaddress)
     // Busca un marco físico libre en el sistema
     frame = getfreeframe();
 
-	// Si no hay marcos físicos libres en el sistema regresa error
-    if(ptbr[pag_del_proceso].framenumber==-1)
+	if(ptbr[pag_del_proceso].framenumber==-1){
+    // Si no hay marcos físicos libres en el sistema regresa error
+    if (frame == -1)
     {
-        if(frame == -1)
-        {
-        return(-1); // Regresar indicando error de memoria insuficiente
-        }
+        return (-1); // Regresar indicando error de memoria insuficiente
     }
-    else
+	}
     // Si la página estaba en memoria secundaria
-    {
+    else{
         // Cópialo al frame libre encontrado en memoria principal y transfiérelo a la memoria física
-        //copyframe(vframe,frame);
-        writeblock(buffer,frame);
+       // copyframe(vframe,frame);
+	writeblock(buffer,frame);
     }
    
 	// Poner el bit de presente en 1 en la tabla de páginas y el frame 
@@ -145,24 +143,29 @@ int pagefault(char *vaddress)
     return(1); // Regresar todo bien
 }
 
+
 int getfreeframe()
 {
-    int i;
-    for(i=framesbegin;i <systemframetablesize+framesbegin;i++)
-    {
-        if(!systemframetable[i].assigned)
-        {
-            systemframetable[i].assigned = 1;
-            break;
-        }
-        if(i<systemframetablesize+framesbegin)
-            systemframetable[i].assigned = 1;
-        else
-            i=-1;
-        return (i);
-    }
-}
+	int count_frame;
 
+	// Recorrer la tabla de frames para encontrar uno disponible
+	for(count_frame = framesbegin ; count_frame < (systemframetablesize + framesbegin); count_frame++)
+	{
+		//Si ecuentra un frame que está sin asignar, termina la búsqueda        	
+		if(0 == systemframetable[count_frame].assigned)
+        	{
+			systemframetable[count_frame].assigned=1;
+			break;
+        	}
+	}
+
+	if(count_frame < (systemframetablesize + framesbegin))
+        	systemframetable[count_frame].assigned = 1;
+	else
+        	count_frame = -1;
+
+	return(count_frame);
+}
 
 int searchvirtualframe()
 {
@@ -183,7 +186,6 @@ int i;
         i = -1;
     return (i);
 }
-
 int getfifo()
 {
     int ret, tiempo=-1,i;
@@ -203,5 +205,4 @@ int getfifo()
     }
     return ret;
 }
-
 
