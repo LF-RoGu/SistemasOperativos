@@ -77,11 +77,11 @@ int pagefault(char *vaddress)
     // Si la página del proceso está en un marco virtual del disco
     if((ptbr + pag_del_proceso)->presente != 1 && (ptbr + pag_del_proceso)->framenumber != -1)
     {
-        frame = (ptbr + pag_del_proceso)->framenumber;
+        vframe = (ptbr + pag_del_proceso)->framenumber;
 		// Lee el marco virtual al buffer
-        readblock(buffer,frame);
+        readblock(buffer,vframe);
         // Libera el frame virtual
-        systemframetable[frame].assigned=0;
+        systemframetable[vframe].assigned=0;
     }
 
 
@@ -100,7 +100,6 @@ int pagefault(char *vaddress)
         {
             frame = (ptbr + pag_a_expulsar)->framenumber;
             saveframe(frame);
-            pag_a_expulsar = getfifo();
 			// Escribe el frame de la página en el archivo de respaldo y pon en 0 el bit de modificado
             (ptbr + pag_a_expulsar)->modificado=0;
         }
@@ -114,27 +113,25 @@ int pagefault(char *vaddress)
         }
         // Copia el frame a memoria secundaria, actualiza la tabla de páginas y libera el marco de la memoria principal
         copyframe(frame,vframe);
-        (ptbr + pag_a_expulsar)->presente=0;
         (ptbr + pag_a_expulsar)->framenumber = vframe;
+        (ptbr + pag_a_expulsar)->presente=0;
         systemframetable[frame].assigned = 0;
         systemframetable[vframe].assigned = 1;
     }
 
-    // Busca un marco físico libre en el sistema
     frame = getfreeframe();
 
-	if(ptbr[pag_del_proceso].framenumber==-1){
-    // Si no hay marcos físicos libres en el sistema regresa error
-    if (frame == -1)
+	// Si no hay marcos físicos libres en el sistema regresa error
+    if(ptbr[pag_del_proceso].framenumber==-1)
     {
+        // Si no hay marcos físicos libres en el sistema regresa error
+        if (frame == -1)
+        {
         return (-1); // Regresar indicando error de memoria insuficiente
-    }
+        }
 	}
-    // Si la página estaba en memoria secundaria
     else{
-        // Cópialo al frame libre encontrado en memoria principal y transfiérelo a la memoria física
-       // copyframe(vframe,frame);
-	writeblock(buffer,frame);
+        copyframe(vframe,frame);
     }
    
 	// Poner el bit de presente en 1 en la tabla de páginas y el frame 
@@ -146,26 +143,26 @@ int pagefault(char *vaddress)
 
 int getfreeframe()
 {
-	int count_frame;
+	int i;
 
-	// Recorrer la tabla de frames para encontrar uno disponible
-	for(count_frame = framesbegin ; count_frame < (systemframetablesize + framesbegin); count_frame++)
+	for(i = framesbegin ; i < (systemframetablesize + framesbegin); i++)
 	{
-		//Si ecuentra un frame que está sin asignar, termina la búsqueda        	
-		if(0 == systemframetable[count_frame].assigned)
+		if(systemframetable[i].assigned == 0)
         	{
-			systemframetable[count_frame].assigned=1;
+			systemframetable[i].assigned=1;
 			break;
         	}
 	}
 
-	if(count_frame < (systemframetablesize + framesbegin))
-        	systemframetable[count_frame].assigned = 1;
+	if((systemframetablesize + framesbegin)>i)
+        	systemframetable[i].assigned = 1;
 	else
-        	count_frame = -1;
+        	i = -1;
 
-	return(count_frame);
+	return(i);
 }
+
+
 
 int searchvirtualframe()
 {
@@ -188,21 +185,23 @@ int i;
 }
 int getfifo()
 {
-    int ret, tiempo=-1,i;
-    
-    for (i = 0; i < ptlr ; i++)
-    {
+    int i;
+	int j;
+	int tMax = -1;
 
-        if ((ptbr + i)->presente == 1)
-        {
-
-            if ((ptbr + i)->tarrived <= tiempo)
-            {
-                ret = i;
-                tiempo = (ptbr + i)->tarrived;
-            }
-        }
-    }
-    return ret;
+	for(i = 0 ; i < ptlr ; i++)
+	{
+		if((ptbr + i)->presente==1)
+		{
+			if((ptbr + i)->tarrived <= tMax)
+			{
+				j = i;
+				tMax = (ptbr + i)->tarrived;
+			}
+		}
+	}
+   
+    return j;
 }
+
 
